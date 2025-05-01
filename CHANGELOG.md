@@ -1,3 +1,7 @@
+0.6.1
+---
+New features:
+  * Added `ignoreWord` function
 
 0.6
 ---
