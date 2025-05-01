@@ -20,8 +20,9 @@
         devShells.default = pkgs.mkShell
         { name = "aspell-pipe-dev";
           inputsFrom = [ config.haskellProjects.default.outputs.devShell ];
-          packages = [
-            (pkgs.aspellWithDicts (d: [d.en]))
+          packages = 
+          [ (pkgs.aspellWithDicts (d: [d.en]))
+            pkgs.haskell-language-server
           ];
         };
       };

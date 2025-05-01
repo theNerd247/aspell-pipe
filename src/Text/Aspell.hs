@@ -92,7 +92,7 @@ startAspell options = do
     case optResult of
         Just e -> return $ Left e
         Nothing -> tryConvert $ do
-            let proc = (P.proc aspellCommand ("-a" : (concat $ optionToArgs <$> options)))
+            let proc = (P.proc aspellCommand ("-a" : concatMap optionToArgs options))
                        { P.std_in = P.CreatePipe
                        , P.std_out = P.CreatePipe
                        , P.std_err = P.CreatePipe
@@ -115,22 +115,20 @@ startAspell options = do
                     -- Now that aspell has started and we got an
                     -- identification string, we need to make sure it
                     -- looks legitimate before we proceed.
-                    case validIdent ident of
-                        False -> fail ("Unexpected identification string: " <> T.unpack ident)
-                        True -> do
-                            mv <- newMVar ()
+                    (if validIdent ident then (do
+                        mv <- newMVar ()
 
-                            let as = Aspell { aspellProcessHandle  = ph
-                                            , aspellStdin          = inH
-                                            , aspellStdout         = outH
-                                            , aspellIdentification = ident
-                                            , aspellLock           = mv
-                                            }
+                        let as = Aspell { aspellProcessHandle  = ph
+                                        , aspellStdin          = inH
+                                        , aspellStdout         = outH
+                                        , aspellIdentification = ident
+                                        , aspellLock           = mv
+                                        }
 
-                            -- Enable terse mode with aspell to improve performance.
-                            T.hPutStrLn inH "!"
+                        -- Enable terse mode with aspell to improve performance.
+                        T.hPutStrLn inH "!"
 
-                            return as
+                        return as) else fail ("Unexpected identification string: " <> T.unpack ident))
 
 validIdent :: T.Text -> Bool
 validIdent s =
@@ -157,15 +155,12 @@ checkOption (UseDictionary d) = do
     case dictListResult of
         Left msg -> return $ Just msg
         Right dictList ->
-            case d `elem` dictList of
-                True -> return Nothing
-                False -> return $ Just $ "Requested dictionary " <> show d <> " is not installed"
+            (if d `elem` dictList then return Nothing else return $ Just $ "Requested dictionary " <> show d <> " is not installed")
 
 -- | Obtain the list of installed Aspell dictionaries.
 aspellDictionaries :: IO (Either String [T.Text])
 aspellDictionaries =
-    tryConvert $
-    (T.pack <$>) <$> lines <$> P.readProcess aspellCommand ["dicts"] ""
+    tryConvert ((T.pack <$>) . lines <$> P.readProcess aspellCommand ["dicts"] "")
 
 optionToArgs :: AspellOption -> [String]
 optionToArgs (UseDictionary d) = ["-d", T.unpack d]
@@ -233,11 +228,9 @@ parseWithoutAlternatives t =
 readLinesUntil :: Handle -> (T.Text -> Bool) -> IO [T.Text]
 readLinesUntil h f = do
     line <- T.hGetLine h
-    case f line of
-        True -> return []
-        False -> do
-            rest <- readLinesUntil h f
-            return $ line : rest
+    (if f line then return [] else (do
+        rest <- readLinesUntil h f
+        return $ line : rest))
 
 tryConvert :: IO a -> IO (Either String a)
 tryConvert act = do
