@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
 -- | A pipe-based interface to Aspell.
 --
 -- This interface is beneficial when dynamic linking against the Aspell
@@ -14,6 +15,7 @@ module Text.Aspell
   , AspellResponse(..)
   , Mistake(..)
   , AspellOption(..)
+  , ignoreWord
   , startAspell
   , stopAspell
   , askAspell
@@ -191,6 +193,12 @@ askAspell as t = withMVar (aspellLock as) $ const $ do
         case resultLines of
             [] -> return AllCorrect
             _ -> return $ Mistakes $ parseMistake <$> resultLines
+
+-- | Ignore the given word for the given aspell pipe.
+ignoreWord :: Aspell -> T.Text -> IO ()
+ignoreWord Aspell{..} word = withMVar aspellLock  $ const $ do
+    T.hPutStrLn aspellStdin $ "@" <> word 
+    hFlush aspellStdin
 
 parseMistake :: T.Text -> Mistake
 parseMistake t
