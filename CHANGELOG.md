@@ -1,3 +1,9 @@
+0.7.1
+---
+New features:
+  * Added `addToPersonalDict` function
+  * Added `savePersonalDict` function
+
 0.7
 ---
 New features:
