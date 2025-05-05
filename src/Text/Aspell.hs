@@ -209,10 +209,10 @@ addToPersonalDict Aspell{..} word = withMVar aspellLock  $ const $ do
     T.hPutStrLn aspellStdin $ "*" <> word 
     hFlush aspellStdin
 
-savePersonalDict :: Aspell -> T.Text -> IO ()
-savePersonalDict Aspell{..} word = withMVar aspellLock  $ const $ do
+savePersonalDict :: Aspell -> IO ()
+savePersonalDict Aspell{..} = withMVar aspellLock  $ const $ do
     -- immediately save the word
-    T.hPutStrLn aspellStdin $ "#" <> word 
+    T.hPutStrLn aspellStdin $ "#"
     hFlush aspellStdin
 
 parseMistake :: T.Text -> Mistake
