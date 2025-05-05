@@ -16,6 +16,8 @@ module Text.Aspell
   , Mistake(..)
   , AspellOption(..)
   , ignoreWord
+  , addToPersonalDict
+  , savePersonalDict
   , startAspell
   , stopAspell
   , askAspell
@@ -198,6 +200,19 @@ askAspell as t = withMVar (aspellLock as) $ const $ do
 ignoreWord :: Aspell -> T.Text -> IO ()
 ignoreWord Aspell{..} word = withMVar aspellLock  $ const $ do
     T.hPutStrLn aspellStdin $ "@" <> word 
+    hFlush aspellStdin
+
+-- | Add a word to the personal dictionary
+addToPersonalDict :: Aspell -> T.Text -> IO ()
+addToPersonalDict Aspell{..} word = withMVar aspellLock  $ const $ do
+    -- add the word to the dictionary
+    T.hPutStrLn aspellStdin $ "*" <> word 
+    hFlush aspellStdin
+
+savePersonalDict :: Aspell -> T.Text -> IO ()
+savePersonalDict Aspell{..} word = withMVar aspellLock  $ const $ do
+    -- immediately save the word
+    T.hPutStrLn aspellStdin $ "#" <> word 
     hFlush aspellStdin
 
 parseMistake :: T.Text -> Mistake
